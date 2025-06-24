@@ -28,7 +28,11 @@ trigger AccountTrigger on Account (before insert, before update, after insert, a
  * Trigger should only fire on insert.
  */
                 if (acc.ShippingAddress != null) {
-                    acc.BillingAddress = acc.ShippingAddress;
+                    acc.BillingStreet = acc.ShippingStreet;
+                    acc.BillingCity = acc.ShippingStreet;
+                    acc.BillingState = acc.ShippingState;
+                    acc.BillingPostalCode = acc.ShippingPostalCode;
+                    acc.BillingCountry = acc.ShippingCountry;
                 }
 
                 /*
