@@ -25,7 +25,7 @@ trigger OpportunityTrigger on Opportunity (before insert, before update, after i
  * Error Message: 'Cannot delete closed opportunity for a banking account that is won'
  * Trigger should only fire on delete.
  */
-            OpportunityTriggerHelper.stopBankOppClose(Trigger.old);
+            //OpportunityTriggerHelper.stopBankOppClose(Trigger.old);
 
         }
         when AFTER_INSERT {
@@ -37,27 +37,42 @@ trigger OpportunityTrigger on Opportunity (before insert, before update, after i
 * to the contact on the same account with the title of 'CEO'.
 * Trigger should only fire on update.
 */
-            /*
-Trigger to update the primary contact on an opportunity when it is updated.
-1. Define trigger on Opportunity for the before update event.
-2. Create a set to store unique account IDs from the updated opportunities.
-3. Loop through each opportunity in the trigger context:
-   a. Check if the opportunity has an associated account ID.
-   b. If it does, add the account ID to the set.
-4. Query for contacts with the title 'CEO' for the collected account IDs.
-5. Create a map to associate account IDs with their corresponding CEO contacts.
-6. Loop through the queried contacts:
-   a. For each contact, add it to the list of CEO contacts for its account ID in the map.
-7. Loop through the opportunities again:
-   a. For each opportunity, check if the account ID has any associated CEO contacts.
-   b. If a CEO contact exists, set the primary contact field on the opportunity to the CEO contact's ID.
-*/
+          List<Opportunity> triggerOpps = Trigger.new;
 
-            for (Opportunity opp: Trigger.new) {
-                List<Contact> ceoTitle = [ SELECT Id, Name, Title FROM Contact WHERE Title = 'CEO'];
+//Create a set to store unique account IDs from the updated opportunities.
+            Set<Id> oppIds = new Set<Id>();
 
+//Loop through each opportunity in the trigger context:
+            for (Opportunity opp: triggerOpps) {
+                //   a. Check if the opportunity has an associated account ID.
+                if(opp.AccountId != null){
+                    //   b. If it does, add the account ID to the set.
+                    oppIds.add(opp.AccountId);
+                }
             }
+//4. Query for contacts with the title 'CEO' for the collected account IDs.
+            List<Contact> ceos = [
+                    SELECT Id, AccountId, Name, Title
+                    FROM Contact
+                    WHERE Title = 'CEO'
+                    AND AccountId IN :oppIds
+            ];
+//5. Create a map to associate account IDs with their corresponding CEO contacts.
+            Map<Id, Contact> ceoList = new Map<Id, Contact>();
+//6. Loop through the queried contacts:
+            for (Contact con: ceos) {
+                // a. For each contact, add it to the list of CEO contacts for its account ID in the map.
+                ceoList.put(con.AccountId, con);
 
+                //7. Loop through the opportunities again:
+                for (Opportunity opp: triggerOpps){
+                    //  a. For each opportunity, check if the account ID has any associated CEO contacts.
+                    if (ceoList.containsKey(opp.AccountId)) {
+                        //  b. If a CEO contact exists, set the primary contact field on the opportunity to the CEO contact's ID.
+                        opp.Primary_Contact__c = ceoList.get(opp.AccountId).Id;
+                    }
+                }
+            }
         }
         when AFTER_DELETE {
 
