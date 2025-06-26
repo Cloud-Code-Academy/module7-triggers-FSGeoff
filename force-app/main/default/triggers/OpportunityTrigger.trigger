@@ -50,16 +50,16 @@ trigger OpportunityTrigger on Opportunity (before insert, before update, after i
                     oppIds.add(opp.AccountId);
                 }
             }
-//4. Query for contacts with the title 'CEO' for the collected account IDs.
+// Query for contacts with the title 'CEO' for the collected account IDs.
             List<Contact> ceos = [
                     SELECT Id, AccountId, Name, Title
                     FROM Contact
                     WHERE Title = 'CEO'
                     AND AccountId IN :oppIds
             ];
-//5. Create a map to associate account IDs with their corresponding CEO contacts.
+// Create a map to associate account IDs with their corresponding CEO contacts.
             Map<Id, Contact> ceoList = new Map<Id, Contact>();
-//6. Loop through the queried contacts:
+// Loop through the queried contacts:
             for (Contact con: ceos) {
                 // a. For each contact, add it to the list of CEO contacts for its account ID in the map.
                 ceoList.put(con.AccountId, con);
